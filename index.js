@@ -28,22 +28,51 @@ async function run() {
 
     const coffeeCollection = client.db("coffeeDB").collection("coffees")
 
-    app.get("/coffee", async (req, res)=> {
+    app.get("/coffee", async (req, res) => {
       const cursor = coffeeCollection.find();
       const result = await cursor.toArray();
       res.send(result)
     })
 
-    app.post("/coffee", async(req, res)=>{
+    app.get("/coffee/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await coffeeCollection.findOne(query)
+      res.send(result)
+    })
+
+    app.post("/coffee", async (req, res) => {
       const newCoffee = req.body
-      const  result = await coffeeCollection.insertOne(newCoffee)
+      const result = await coffeeCollection.insertOne(newCoffee)
       res.send(result)
       // console.log(newCoffee)
     })
 
-    app.delete("/coffee/:id", async(req, res)=>{
+
+    app.put(`/coffee/:id`, async(req, res)=>{
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
+      const filter = {_id: new ObjectId(id)};
+      const options = {upsert: true};
+      const updatedCoffee= req.body;
+      const coffee = {
+        $set: {
+          coffeeChef: updatedCoffee.coffeeChef,
+          coffeeDetails: updatedCoffee.coffeeDetails,
+          coffeeName: updatedCoffee.coffeeName,
+          coffeeSupplier: updatedCoffee.coffeeSupplier,
+          coffeeCategory: updatedCoffee.coffeeCategory,
+          coffeeTaste: updatedCoffee.coffeeTaste,
+          photo: updatedCoffee.photo
+        }
+      }
+
+      const result = await coffeeCollection.updateOne(filter, coffee, options)
+      res.send(result)
+    })
+
+    app.delete("/coffee/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
       const result = await coffeeCollection.deleteOne(query)
       res.send(result)
     })
@@ -60,10 +89,10 @@ async function run() {
 run().catch(console.dir);
 
 
-app.get('/', (req, res)=>{
-    res.send("coffee making Store is running")
+app.get('/', (req, res) => {
+  res.send("coffee making Store is running")
 });
 
-app.listen(port, ()=>{
-    console.log(`Coffee server is running on prot: ${port}`)
+app.listen(port, () => {
+  console.log(`Coffee server is running on prot: ${port}`)
 })
